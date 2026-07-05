@@ -1,0 +1,2621 @@
+[
+  {
+    "label": "GET /docs (OpenAPI UI)",
+    "status": 200,
+    "ms": 22,
+    "ok": true,
+    "body": "\n    <!DOCTYPE html>\n    <html>\n    <head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <link type=\"text/css\" rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css\">\n    <link rel=\"shortcut icon\" href=\"https://fastapi.tiangolo.com/img/"
+  },
+  {
+    "label": "GET /openapi.json",
+    "status": 200,
+    "ms": 47,
+    "ok": true,
+    "body": {
+      "openapi": "3.1.0",
+      "info": {
+        "title": "TaskExecutor API",
+        "version": "0.1.0"
+      },
+      "paths": {
+        "/api/v1/auth/register": {
+          "post": {
+            "tags": [
+              "Auth"
+            ],
+            "summary": "Register",
+            "description": "Register a new user and auto-seed default categories.",
+            "operationId": "register_api_v1_auth_register_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserCreate"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "201": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AuthResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/api/v1/auth/login": {
+          "post": {
+            "tags": [
+              "Auth"
+            ],
+            "summary": "Login",
+            "description": "Log in with email and password.",
+            "operationId": "login_api_v1_auth_login_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/LoginRequest"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AuthResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/api/v1/auth/google": {
+          "post": {
+            "tags": [
+              "Auth"
+            ],
+            "summary": "Google Auth",
+            "description": "Google OAuth Sign-In or Register.",
+            "operationId": "google_auth_api_v1_auth_google_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/GoogleAuthRequest"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AuthResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/api/v1/auth/refresh": {
+          "post": {
+            "tags": [
+              "Auth"
+            ],
+            "summary": "Refresh Token",
+            "description": "Exchange refresh token for new access/refresh tokens (rotation).",
+            "operationId": "refresh_token_api_v1_auth_refresh_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/RefreshTokenRequest"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "additionalProperties": true,
+                      "type": "object",
+                      "title": "Response Refresh Token Api V1 Auth Refresh Post"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/api/v1/auth/me": {
+          "get": {
+            "tags": [
+              "Auth"
+            ],
+            "summary": "Get Me",
+            "description": "Get current user details.",
+            "operationId": "get_me_api_v1_auth_me_get",
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/UserResponse"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/tasks": {
+          "get": {
+            "tags": [
+              "Tasks"
+            ],
+            "summary": "Read Tasks",
+            "description": "Retrieve tasks with filtering options.",
+            "operationId": "read_tasks_api_v1_tasks_get",
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ],
+            "parameters": [
+              {
+                "name": "date",
+                "in": "query",
+                "required": false,
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Exact date filter",
+                  "title": "Date"
+                },
+                "description": "Exact date filter"
+              },
+              {
+                "name": "start_date",
+                "in": "query",
+                "required": false,
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Start date range",
+                  "title": "Start Date"
+                },
+                "description": "Start date range"
+              },
+              {
+                "name": "end_date",
+                "in": "query",
+                "required": false,
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "End date range",
+                  "title": "End Date"
+                },
+                "description": "End date range"
+              },
+              {
+                "name": "is_completed",
+                "in": "query",
+                "required": false,
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Filter by completion status",
+                  "title": "Is Completed"
+                },
+                "description": "Filter by completion status"
+              },
+              {
+                "name": "category_id",
+                "in": "query",
+                "required": false,
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Filter by category ID",
+                  "title": "Category Id"
+                },
+                "description": "Filter by category ID"
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TaskResponse"
+                      },
+                      "title": "Response Read Tasks Api V1 Tasks Get"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "post": {
+            "tags": [
+              "Tasks"
+            ],
+            "summary": "Create Task",
+            "description": "Create a new task.",
+            "operationId": "create_task_api_v1_tasks_post",
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ],
+            "requestBody": {
+              "required": true,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TaskCreate"
+                  }
+                }
+              }
+            },
+            "responses": {
+              "201": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/TaskResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/api/v1/tasks/{task_id}": {
+          "get": {
+            "tags": [
+              "Tasks"
+            ],
+            "summary": "Read Task By Id",
+            "description": "Retrieve a single task by ID.",
+            "operationId": "read_task_by_id_api_v1_tasks__task_id__get",
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ],
+            "parameters": [
+              {
+                "name": "task_id",
+                "in": "path",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Task Id"
+                }
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/TaskDetailResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "put": {
+            "tags": [
+              "Tasks"
+            ],
+            "summary": "Update Task",
+            "description": "Update a task, validating target_date modifications.",
+            "operationId": "update_task_api_v1_tasks__task_id__put",
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ],
+            "parameters": [
+              {
+                "name": "task_id",
+                "in": "path",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Task Id"
+                }
+              }
+            ],
+            "requestBody": {
+              "required": true,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TaskUpdate"
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/TaskResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "delete": {
+            "tags": [
+              "Tasks"
+            ],
+            "summary": "Delete Task",
+            "description": "Delete a task.",
+            "operationId": "delete_task_api_v1_tasks__task_id__delete",
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ],
+            "parameters": [
+              {
+                "name": "task_id",
+                "in": "path",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Task Id"
+                }
+              }
+            ],
+            "responses": {
+              "204": {
+                "description": "Successful Response"
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/api/v1/tasks/{task_id}/complete": {
+          "patch": {
+            "tags": [
+              "Tasks"
+            ],
+            "summary": "Complete Task",
+            "description": "Mark a task as completed or reopen it.",
+            "operationId": "complete_task_api_v1_tasks__task_id__complete_patch",
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ],
+            "parameters": [
+              {
+                "name": "task_id",
+                "in": "path",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Task Id"
+                }
+              }
+            ],
+            "requestBody": {
+              "required": true,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TaskComplete"
+                  }
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/TaskResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/api/v1/tasks/{task_id}/changes": {
+          "get": {
+            "tags": [
+              "Tasks"
+            ],
+            "summary": "Read Task Change Log",
+            "description": "Retrieve the change log history for a task.",
+            "operationId": "read_task_change_log_api_v1_tasks__task_id__changes_get",
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ],
+            "parameters": [
+              {
+                "name": "task_id",
+                "in": "path",
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "format": "uuid",
+                  "title": "Task Id"
+                }
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TaskChangeLogResponse"
+                      },
+                      "title": "Response Read Task Change Log Api V1 Tasks  Task Id  Changes Get"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/api/v1/categories": {
+          "get": {
+            "tags": [
+              "Categories"
+            ],
+            "summary": "Read Categories",
+            "description": "Retrieve all categories for the authenticated user, ordered alphabetically.",
+            "operationId": "read_categories_api_v1_categories_get",
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "items": {
+                        "$ref": "#/components/schemas/CategoryResponse"
+                      },
+                      "type": "array",
+                      "title": "Response Read Categories Api V1 Categories Get"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/analytics/summary": {
+          "get": {
+            "tags": [
+              "Analytics"
+            ],
+            "summary": "Get Analytics Summary",
+            "description": "Retrieve aggregate productivity analytics for the current user.",
+            "operationId": "get_analytics_summary_api_v1_analytics_summary_get",
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AnalyticsSummary"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/export/json": {
+          "get": {
+            "tags": [
+              "Export"
+            ],
+            "summary": "Export User Data Json",
+            "description": "Export all task and category data for the authenticated user.",
+            "operationId": "export_user_data_json_api_v1_export_json_get",
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "items": {
+                        "$ref": "#/components/schemas/TaskDetailResponse"
+                      },
+                      "type": "array",
+                      "title": "Response Export User Data Json Api V1 Export Json Get"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/agent/insights": {
+          "post": {
+            "tags": [
+              "Agentic AI"
+            ],
+            "summary": "Generate Coaching Insights",
+            "description": "Triggers the ADK 2.0 Agentic AI productivity coach.",
+            "operationId": "generate_coaching_insights_api_v1_agent_insights_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AgentInsightsRequest"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AgentInsightsResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/agent/plan": {
+          "post": {
+            "tags": [
+              "Agentic AI"
+            ],
+            "summary": "Generate Task Plan",
+            "description": "Triggers the ADK 2.0 Task Planner Agent.",
+            "operationId": "generate_task_plan_api_v1_agent_plan_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AgentPlanRequest"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AgentPlanResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/agent/chat": {
+          "post": {
+            "tags": [
+              "Agentic AI"
+            ],
+            "summary": "Chat With Assistant",
+            "description": "Orchestrated multi-agent chat.",
+            "operationId": "chat_with_assistant_api_v1_agent_chat_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AgentChatRequest"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AgentChatResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/agent/reschedule": {
+          "post": {
+            "tags": [
+              "Agentic AI"
+            ],
+            "summary": "Run Rescheduler",
+            "description": "Direct endpoint for schedule date optimization.",
+            "operationId": "run_rescheduler_api_v1_agent_reschedule_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AgentRescheduleRequest"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/AgentRescheduleResponse"
+                    }
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/agent/briefing": {
+          "get": {
+            "tags": [
+              "Agentic AI"
+            ],
+            "summary": "Get Daily Briefing",
+            "description": "Generates a personalized daily greeting summarizing current stats.\nThe Gemini call is offloaded to a thread pool to avoid blocking the event loop.",
+            "operationId": "get_daily_briefing_api_v1_agent_briefing_get",
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {}
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/api/v1/agent/suggest-subtasks": {
+          "post": {
+            "tags": [
+              "Agentic AI"
+            ],
+            "summary": "Suggest Subtasks",
+            "description": "Queries Gemini for 3 to 5 subtask checklist items.\nThe Gemini call is offloaded to a thread pool to avoid blocking the event loop.",
+            "operationId": "suggest_subtasks_api_v1_agent_suggest_subtasks_post",
+            "requestBody": {
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SuggestSubtasksRequest"
+                  }
+                }
+              },
+              "required": true
+            },
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {}
+                  }
+                }
+              },
+              "422": {
+                "description": "Validation Error",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HTTPValidationError"
+                    }
+                  }
+                }
+              }
+            },
+            "security": [
+              {
+                "OAuth2PasswordBearer": []
+              }
+            ]
+          }
+        },
+        "/health": {
+          "get": {
+            "tags": [
+              "Health"
+            ],
+            "summary": "Health Check",
+            "operationId": "health_check_health_get",
+            "responses": {
+              "200": {
+                "description": "Successful Response",
+                "content": {
+                  "application/json": {
+                    "schema": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "components": {
+        "schemas": {
+          "AgentChatRequest": {
+            "properties": {
+              "message": {
+                "type": "string",
+                "title": "Message"
+              }
+            },
+            "type": "object",
+            "required": [
+              "message"
+            ],
+            "title": "AgentChatRequest"
+          },
+          "AgentChatResponse": {
+            "properties": {
+              "response": {
+                "type": "string",
+                "title": "Response"
+              }
+            },
+            "type": "object",
+            "required": [
+              "response"
+            ],
+            "title": "AgentChatResponse"
+          },
+          "AgentInsightsRequest": {
+            "properties": {
+              "message": {
+                "type": "string",
+                "title": "Message",
+                "default": "Analyze my current task execution statistics and give me coaching advice."
+              }
+            },
+            "type": "object",
+            "title": "AgentInsightsRequest"
+          },
+          "AgentInsightsResponse": {
+            "properties": {
+              "response": {
+                "type": "string",
+                "title": "Response"
+              }
+            },
+            "type": "object",
+            "required": [
+              "response"
+            ],
+            "title": "AgentInsightsResponse"
+          },
+          "AgentPlanRequest": {
+            "properties": {
+              "message": {
+                "type": "string",
+                "title": "Message",
+                "default": "Break down my goal to launch my Kaggle competition model in 3 weeks into structured tasks."
+              }
+            },
+            "type": "object",
+            "title": "AgentPlanRequest"
+          },
+          "AgentPlanResponse": {
+            "properties": {
+              "response": {
+                "type": "string",
+                "title": "Response"
+              }
+            },
+            "type": "object",
+            "required": [
+              "response"
+            ],
+            "title": "AgentPlanResponse"
+          },
+          "AgentRescheduleRequest": {
+            "properties": {
+              "message": {
+                "type": "string",
+                "title": "Message",
+                "default": "Optimize my overdue and chronically rescheduled tasks."
+              }
+            },
+            "type": "object",
+            "title": "AgentRescheduleRequest"
+          },
+          "AgentRescheduleResponse": {
+            "properties": {
+              "response": {
+                "type": "string",
+                "title": "Response"
+              }
+            },
+            "type": "object",
+            "required": [
+              "response"
+            ],
+            "title": "AgentRescheduleResponse"
+          },
+          "AnalyticsSummary": {
+            "properties": {
+              "total_tasks": {
+                "type": "integer",
+                "title": "Total Tasks"
+              },
+              "completed_tasks": {
+                "type": "integer",
+                "title": "Completed Tasks"
+              },
+              "pending_tasks": {
+                "type": "integer",
+                "title": "Pending Tasks"
+              },
+              "completion_rate": {
+                "type": "number",
+                "title": "Completion Rate"
+              },
+              "overdue_tasks": {
+                "type": "integer",
+                "title": "Overdue Tasks"
+              },
+              "tasks_by_category": {
+                "items": {
+                  "$ref": "#/components/schemas/CategoryBreakdown"
+                },
+                "type": "array",
+                "title": "Tasks By Category"
+              },
+              "date_change_count": {
+                "type": "integer",
+                "title": "Date Change Count"
+              },
+              "most_rescheduled_task": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/MostRescheduledTask"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object",
+            "required": [
+              "total_tasks",
+              "completed_tasks",
+              "pending_tasks",
+              "completion_rate",
+              "overdue_tasks",
+              "tasks_by_category",
+              "date_change_count"
+            ],
+            "title": "AnalyticsSummary"
+          },
+          "AuthResponse": {
+            "properties": {
+              "access_token": {
+                "type": "string",
+                "title": "Access Token"
+              },
+              "refresh_token": {
+                "type": "string",
+                "title": "Refresh Token"
+              },
+              "user": {
+                "$ref": "#/components/schemas/UserResponse"
+              }
+            },
+            "type": "object",
+            "required": [
+              "access_token",
+              "refresh_token",
+              "user"
+            ],
+            "title": "AuthResponse"
+          },
+          "CategoryBreakdown": {
+            "properties": {
+              "category_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Category Id"
+              },
+              "category_name": {
+                "type": "string",
+                "title": "Category Name"
+              },
+              "total": {
+                "type": "integer",
+                "title": "Total"
+              },
+              "completed": {
+                "type": "integer",
+                "title": "Completed"
+              }
+            },
+            "type": "object",
+            "required": [
+              "category_name",
+              "total",
+              "completed"
+            ],
+            "title": "CategoryBreakdown"
+          },
+          "CategoryResponse": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 50,
+                "minLength": 1,
+                "title": "Title"
+              },
+              "color_hex": {
+                "type": "string",
+                "pattern": "^#[0-9A-Fa-f]{6}$",
+                "title": "Color Hex",
+                "default": "#6C63FF"
+              },
+              "icon": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 50
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Icon"
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "user_id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "User Id"
+              }
+            },
+            "type": "object",
+            "required": [
+              "title",
+              "id",
+              "user_id"
+            ],
+            "title": "CategoryResponse"
+          },
+          "GoogleAuthRequest": {
+            "properties": {
+              "google_id_token": {
+                "type": "string",
+                "title": "Google Id Token"
+              }
+            },
+            "type": "object",
+            "required": [
+              "google_id_token"
+            ],
+            "title": "GoogleAuthRequest"
+          },
+          "HTTPValidationError": {
+            "properties": {
+              "detail": {
+                "items": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "type": "array",
+                "title": "Detail"
+              }
+            },
+            "type": "object",
+            "title": "HTTPValidationError"
+          },
+          "LoginRequest": {
+            "properties": {
+              "email": {
+                "type": "string",
+                "title": "Email"
+              },
+              "password": {
+                "type": "string",
+                "title": "Password"
+              }
+            },
+            "type": "object",
+            "required": [
+              "email",
+              "password"
+            ],
+            "title": "LoginRequest"
+          },
+          "MostRescheduledTask": {
+            "properties": {
+              "task_id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Task Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "reschedule_count": {
+                "type": "integer",
+                "title": "Reschedule Count"
+              }
+            },
+            "type": "object",
+            "required": [
+              "task_id",
+              "title",
+              "reschedule_count"
+            ],
+            "title": "MostRescheduledTask"
+          },
+          "RefreshTokenRequest": {
+            "properties": {
+              "refresh_token": {
+                "type": "string",
+                "title": "Refresh Token"
+              }
+            },
+            "type": "object",
+            "required": [
+              "refresh_token"
+            ],
+            "title": "RefreshTokenRequest"
+          },
+          "SuggestSubtasksRequest": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "description": {
+                "type": "string",
+                "title": "Description",
+                "default": ""
+              }
+            },
+            "type": "object",
+            "required": [
+              "title"
+            ],
+            "title": "SuggestSubtasksRequest"
+          },
+          "TaskChangeLogResponse": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "task_id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Task Id"
+              },
+              "reason": {
+                "type": "string",
+                "title": "Reason"
+              },
+              "original_target_date": {
+                "type": "string",
+                "format": "date",
+                "title": "Original Target Date"
+              },
+              "new_target_date": {
+                "type": "string",
+                "format": "date",
+                "title": "New Target Date"
+              },
+              "changed_at": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Changed At"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "task_id",
+              "reason",
+              "original_target_date",
+              "new_target_date",
+              "changed_at"
+            ],
+            "title": "TaskChangeLogResponse"
+          },
+          "TaskComplete": {
+            "properties": {
+              "is_completed": {
+                "type": "boolean",
+                "title": "Is Completed"
+              },
+              "actual_duration_minutes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Actual Duration Minutes"
+              },
+              "completion_notes": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Completion Notes"
+              }
+            },
+            "type": "object",
+            "required": [
+              "is_completed"
+            ],
+            "title": "TaskComplete"
+          },
+          "TaskCreate": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1,
+                "title": "Title"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Description"
+              },
+              "target_date": {
+                "type": "string",
+                "format": "date",
+                "title": "Target Date"
+              },
+              "estimated_duration_minutes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Estimated Duration Minutes"
+              },
+              "start_time": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Start Time"
+              },
+              "end_time": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "End Time"
+              },
+              "category_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Category Id"
+              }
+            },
+            "type": "object",
+            "required": [
+              "title",
+              "target_date"
+            ],
+            "title": "TaskCreate"
+          },
+          "TaskDetailResponse": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1,
+                "title": "Title"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Description"
+              },
+              "target_date": {
+                "type": "string",
+                "format": "date",
+                "title": "Target Date"
+              },
+              "estimated_duration_minutes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Estimated Duration Minutes"
+              },
+              "start_time": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Start Time"
+              },
+              "end_time": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "End Time"
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "user_id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "User Id"
+              },
+              "category_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Category Id"
+              },
+              "is_completed": {
+                "type": "boolean",
+                "title": "Is Completed"
+              },
+              "actual_duration_minutes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Actual Duration Minutes"
+              },
+              "completion_notes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Completion Notes"
+              },
+              "completed_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Completed At"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Created At"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Updated At"
+              },
+              "category": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CategoryResponse"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "change_history": {
+                "items": {
+                  "$ref": "#/components/schemas/TaskChangeLogResponse"
+                },
+                "type": "array",
+                "title": "Change History",
+                "default": []
+              }
+            },
+            "type": "object",
+            "required": [
+              "title",
+              "target_date",
+              "id",
+              "user_id",
+              "is_completed",
+              "created_at",
+              "updated_at"
+            ],
+            "title": "TaskDetailResponse"
+          },
+          "TaskResponse": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1,
+                "title": "Title"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Description"
+              },
+              "target_date": {
+                "type": "string",
+                "format": "date",
+                "title": "Target Date"
+              },
+              "estimated_duration_minutes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Estimated Duration Minutes"
+              },
+              "start_time": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Start Time"
+              },
+              "end_time": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "End Time"
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "user_id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "User Id"
+              },
+              "category_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Category Id"
+              },
+              "is_completed": {
+                "type": "boolean",
+                "title": "Is Completed"
+              },
+              "actual_duration_minutes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Actual Duration Minutes"
+              },
+              "completion_notes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Completion Notes"
+              },
+              "completed_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Completed At"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Created At"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Updated At"
+              },
+              "category": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CategoryResponse"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object",
+            "required": [
+              "title",
+              "target_date",
+              "id",
+              "user_id",
+              "is_completed",
+              "created_at",
+              "updated_at"
+            ],
+            "title": "TaskResponse"
+          },
+          "TaskUpdate": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1,
+                "title": "Title"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Description"
+              },
+              "target_date": {
+                "type": "string",
+                "format": "date",
+                "title": "Target Date"
+              },
+              "estimated_duration_minutes": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1.0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Estimated Duration Minutes"
+              },
+              "start_time": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Start Time"
+              },
+              "end_time": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "End Time"
+              },
+              "category_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Category Id"
+              },
+              "change_reason": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Change Reason"
+              }
+            },
+            "type": "object",
+            "required": [
+              "title",
+              "target_date"
+            ],
+            "title": "TaskUpdate"
+          },
+          "UserCreate": {
+            "properties": {
+              "username": {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 3,
+                "title": "Username"
+              },
+              "email": {
+                "type": "string",
+                "maxLength": 255,
+                "title": "Email"
+              },
+              "password": {
+                "type": "string",
+                "minLength": 6,
+                "title": "Password"
+              }
+            },
+            "type": "object",
+            "required": [
+              "username",
+              "email",
+              "password"
+            ],
+            "title": "UserCreate"
+          },
+          "UserResponse": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "username": {
+                "type": "string",
+                "title": "Username"
+              },
+              "email": {
+                "type": "string",
+                "title": "Email"
+              },
+              "auth_provider": {
+                "type": "string",
+                "title": "Auth Provider"
+              },
+              "avatar_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Avatar Url"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Created At"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "username",
+              "email",
+              "auth_provider",
+              "created_at"
+            ],
+            "title": "UserResponse"
+          },
+          "ValidationError": {
+            "properties": {
+              "loc": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "array",
+                "title": "Location"
+              },
+              "msg": {
+                "type": "string",
+                "title": "Message"
+              },
+              "type": {
+                "type": "string",
+                "title": "Error Type"
+              },
+              "input": {
+                "title": "Input"
+              },
+              "ctx": {
+                "type": "object",
+                "title": "Context"
+              }
+            },
+            "type": "object",
+            "required": [
+              "loc",
+              "msg",
+              "type"
+            ],
+            "title": "ValidationError"
+          }
+        },
+        "securitySchemes": {
+          "OAuth2PasswordBearer": {
+            "type": "oauth2",
+            "flows": {
+              "password": {
+                "scopes": {},
+                "tokenUrl": "/api/v1/auth/login"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "label": "GET /auth/me (unauthenticated - expect 401/403)",
+    "status": 401,
+    "ms": 4,
+    "ok": false,
+    "body": {
+      "detail": "Not authenticated"
+    }
+  },
+  {
+    "label": "POST /auth/register (new user)",
+    "status": 201,
+    "ms": 234,
+    "ok": true,
+    "body": {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODMyNjU4MTIsInN1YiI6IjMwMTEyYjlkLTAyNGItNDc1ZS1iZDg5LTgxYzBlYmUyYjE4OCIsInR5cGUiOiJhY2Nlc3MifQ.ffbQb8MthW1G_ZsjerPj3Ygvpvui0zXspdXZizSgwO8",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODM4Njg4MTIsInN1YiI6IjMwMTEyYjlkLTAyNGItNDc1ZS1iZDg5LTgxYzBlYmUyYjE4OCIsInR5cGUiOiJyZWZyZXNoIn0.HDYBQtceKBxwkGQBbKHyACOTssf7iy53SuK_KJhI56o",
+      "user": {
+        "id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+        "username": "TestRunner",
+        "email": "testrunner@example.com",
+        "auth_provider": "local",
+        "avatar_url": null,
+        "created_at": "2026-07-05T15:06:52.246252Z"
+      }
+    }
+  },
+  {
+    "label": "POST /auth/register (duplicate - expect 400/409)",
+    "status": 400,
+    "ms": 4,
+    "ok": false,
+    "body": {
+      "detail": "A user with this email address already exists."
+    }
+  },
+  {
+    "label": "POST /auth/login (valid credentials)",
+    "status": 200,
+    "ms": 199,
+    "ok": true,
+    "body": {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODMyNjU4MTIsInN1YiI6IjMwMTEyYjlkLTAyNGItNDc1ZS1iZDg5LTgxYzBlYmUyYjE4OCIsInR5cGUiOiJhY2Nlc3MifQ.ffbQb8MthW1G_ZsjerPj3Ygvpvui0zXspdXZizSgwO8",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODM4Njg4MTIsInN1YiI6IjMwMTEyYjlkLTAyNGItNDc1ZS1iZDg5LTgxYzBlYmUyYjE4OCIsInR5cGUiOiJyZWZyZXNoIn0.HDYBQtceKBxwkGQBbKHyACOTssf7iy53SuK_KJhI56o",
+      "user": {
+        "id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+        "username": "TestRunner",
+        "email": "testrunner@example.com",
+        "auth_provider": "local",
+        "avatar_url": null,
+        "created_at": "2026-07-05T15:06:52.246252Z"
+      }
+    }
+  },
+  {
+    "label": "POST /auth/login (wrong password - expect 401)",
+    "status": 400,
+    "ms": 198,
+    "ok": false,
+    "body": {
+      "detail": "Incorrect email or password."
+    }
+  },
+  {
+    "label": "GET /auth/me (authenticated)",
+    "status": 200,
+    "ms": 6,
+    "ok": true,
+    "body": {
+      "id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+      "username": "TestRunner",
+      "email": "testrunner@example.com",
+      "auth_provider": "local",
+      "avatar_url": null,
+      "created_at": "2026-07-05T15:06:52.246252Z"
+    }
+  },
+  {
+    "label": "GET /auth/me (no token - expect 401/403)",
+    "status": 401,
+    "ms": 3,
+    "ok": false,
+    "body": {
+      "detail": "Not authenticated"
+    }
+  },
+  {
+    "label": "POST /auth/refresh (valid)",
+    "status": 200,
+    "ms": 4,
+    "ok": true,
+    "body": {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODMyNjU4MTIsInN1YiI6IjMwMTEyYjlkLTAyNGItNDc1ZS1iZDg5LTgxYzBlYmUyYjE4OCIsInR5cGUiOiJhY2Nlc3MifQ.ffbQb8MthW1G_ZsjerPj3Ygvpvui0zXspdXZizSgwO8",
+      "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3ODM4Njg4MTIsInN1YiI6IjMwMTEyYjlkLTAyNGItNDc1ZS1iZDg5LTgxYzBlYmUyYjE4OCIsInR5cGUiOiJyZWZyZXNoIn0.HDYBQtceKBxwkGQBbKHyACOTssf7iy53SuK_KJhI56o",
+      "token_type": "bearer",
+      "expires_in": 1800
+    }
+  },
+  {
+    "label": "POST /auth/refresh (bad token - expect 401)",
+    "status": 401,
+    "ms": 3,
+    "ok": false,
+    "body": {
+      "detail": "Invalid refresh token."
+    }
+  },
+  {
+    "label": "POST /categories (create)",
+    "status": 405,
+    "ms": 2,
+    "ok": false,
+    "body": {
+      "detail": "Method Not Allowed"
+    }
+  },
+  {
+    "label": "GET /categories (list all)",
+    "status": 200,
+    "ms": 7,
+    "ok": true,
+    "body": [
+      {
+        "title": "Other",
+        "color_hex": "#2ECB71",
+        "icon": "folder",
+        "id": "ae230c02-6d3d-4916-bc4f-fda53a7f885a",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188"
+      },
+      {
+        "title": "Personal",
+        "color_hex": "#6C63FF",
+        "icon": "home",
+        "id": "8626b320-017c-4935-96cf-36b97e4b8f4e",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188"
+      },
+      {
+        "title": "Work",
+        "color_hex": "#FF6B6B",
+        "icon": "work",
+        "id": "d5b5ec4d-cb56-444f-86c9-f75baf9b4d0f",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188"
+      }
+    ]
+  },
+  {
+    "label": "GET /categories/nonexistent (expect 404)",
+    "status": 404,
+    "ms": 2,
+    "ok": false,
+    "body": {
+      "detail": "Not Found"
+    }
+  },
+  {
+    "label": "GET /categories (no auth - expect 401/403)",
+    "status": 401,
+    "ms": 3,
+    "ok": false,
+    "body": {
+      "detail": "Not authenticated"
+    }
+  },
+  {
+    "label": "POST /tasks (create with category)",
+    "status": 201,
+    "ms": 13,
+    "ok": true,
+    "body": {
+      "title": "Test Task Alpha",
+      "description": "Created during automated testing",
+      "target_date": "2026-07-10",
+      "estimated_duration_minutes": null,
+      "start_time": null,
+      "end_time": null,
+      "id": "8a659266-f6d5-4a80-81d6-c286daa9e63c",
+      "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+      "category_id": null,
+      "is_completed": false,
+      "actual_duration_minutes": null,
+      "completion_notes": null,
+      "completed_at": null,
+      "created_at": "2026-07-05T15:06:52.904908Z",
+      "updated_at": "2026-07-05T15:06:52.904908Z",
+      "category": null
+    }
+  },
+  {
+    "label": "POST /tasks (create minimal)",
+    "status": 422,
+    "ms": 5,
+    "ok": false,
+    "body": {
+      "detail": "Validation failed: body.target_date: Field required",
+      "error_code": "VALIDATION_ERROR"
+    }
+  },
+  {
+    "label": "POST /tasks (overdue date)",
+    "status": 201,
+    "ms": 6,
+    "ok": true,
+    "body": {
+      "title": "Overdue Task",
+      "description": null,
+      "target_date": "2026-01-01",
+      "estimated_duration_minutes": null,
+      "start_time": null,
+      "end_time": null,
+      "id": "4b9459ac-1644-4826-9ffe-b86bb13e4f21",
+      "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+      "category_id": null,
+      "is_completed": false,
+      "actual_duration_minutes": null,
+      "completion_notes": null,
+      "completed_at": null,
+      "created_at": "2026-07-05T15:06:52.923480Z",
+      "updated_at": "2026-07-05T15:06:52.923480Z",
+      "category": null
+    }
+  },
+  {
+    "label": "GET /tasks (list all)",
+    "status": 200,
+    "ms": 19,
+    "ok": true,
+    "body": [
+      {
+        "title": "Overdue Task",
+        "description": null,
+        "target_date": "2026-01-01",
+        "estimated_duration_minutes": null,
+        "start_time": null,
+        "end_time": null,
+        "id": "4b9459ac-1644-4826-9ffe-b86bb13e4f21",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+        "category_id": null,
+        "is_completed": false,
+        "actual_duration_minutes": null,
+        "completion_notes": null,
+        "completed_at": null,
+        "created_at": "2026-07-05T15:06:52.923480Z",
+        "updated_at": "2026-07-05T15:06:52.923480Z",
+        "category": null
+      },
+      {
+        "title": "Test Task Alpha",
+        "description": "Created during automated testing",
+        "target_date": "2026-07-10",
+        "estimated_duration_minutes": null,
+        "start_time": null,
+        "end_time": null,
+        "id": "8a659266-f6d5-4a80-81d6-c286daa9e63c",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+        "category_id": null,
+        "is_completed": false,
+        "actual_duration_minutes": null,
+        "completion_notes": null,
+        "completed_at": null,
+        "created_at": "2026-07-05T15:06:52.904908Z",
+        "updated_at": "2026-07-05T15:06:52.904908Z",
+        "category": null
+      }
+    ]
+  },
+  {
+    "label": "GET /tasks?is_completed=false",
+    "status": 200,
+    "ms": 7,
+    "ok": true,
+    "body": [
+      {
+        "title": "Overdue Task",
+        "description": null,
+        "target_date": "2026-01-01",
+        "estimated_duration_minutes": null,
+        "start_time": null,
+        "end_time": null,
+        "id": "4b9459ac-1644-4826-9ffe-b86bb13e4f21",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+        "category_id": null,
+        "is_completed": false,
+        "actual_duration_minutes": null,
+        "completion_notes": null,
+        "completed_at": null,
+        "created_at": "2026-07-05T15:06:52.923480Z",
+        "updated_at": "2026-07-05T15:06:52.923480Z",
+        "category": null
+      },
+      {
+        "title": "Test Task Alpha",
+        "description": "Created during automated testing",
+        "target_date": "2026-07-10",
+        "estimated_duration_minutes": null,
+        "start_time": null,
+        "end_time": null,
+        "id": "8a659266-f6d5-4a80-81d6-c286daa9e63c",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+        "category_id": null,
+        "is_completed": false,
+        "actual_duration_minutes": null,
+        "completion_notes": null,
+        "completed_at": null,
+        "created_at": "2026-07-05T15:06:52.904908Z",
+        "updated_at": "2026-07-05T15:06:52.904908Z",
+        "category": null
+      }
+    ]
+  },
+  {
+    "label": "GET /tasks?priority=high",
+    "status": 200,
+    "ms": 5,
+    "ok": true,
+    "body": [
+      {
+        "title": "Overdue Task",
+        "description": null,
+        "target_date": "2026-01-01",
+        "estimated_duration_minutes": null,
+        "start_time": null,
+        "end_time": null,
+        "id": "4b9459ac-1644-4826-9ffe-b86bb13e4f21",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+        "category_id": null,
+        "is_completed": false,
+        "actual_duration_minutes": null,
+        "completion_notes": null,
+        "completed_at": null,
+        "created_at": "2026-07-05T15:06:52.923480Z",
+        "updated_at": "2026-07-05T15:06:52.923480Z",
+        "category": null
+      },
+      {
+        "title": "Test Task Alpha",
+        "description": "Created during automated testing",
+        "target_date": "2026-07-10",
+        "estimated_duration_minutes": null,
+        "start_time": null,
+        "end_time": null,
+        "id": "8a659266-f6d5-4a80-81d6-c286daa9e63c",
+        "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+        "category_id": null,
+        "is_completed": false,
+        "actual_duration_minutes": null,
+        "completion_notes": null,
+        "completed_at": null,
+        "created_at": "2026-07-05T15:06:52.904908Z",
+        "updated_at": "2026-07-05T15:06:52.904908Z",
+        "category": null
+      }
+    ]
+  },
+  {
+    "label": "GET /tasks/:id",
+    "status": 200,
+    "ms": 9,
+    "ok": true,
+    "body": {
+      "title": "Test Task Alpha",
+      "description": "Created during automated testing",
+      "target_date": "2026-07-10",
+      "estimated_duration_minutes": null,
+      "start_time": null,
+      "end_time": null,
+      "id": "8a659266-f6d5-4a80-81d6-c286daa9e63c",
+      "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+      "category_id": null,
+      "is_completed": false,
+      "actual_duration_minutes": null,
+      "completion_notes": null,
+      "completed_at": null,
+      "created_at": "2026-07-05T15:06:52.904908Z",
+      "updated_at": "2026-07-05T15:06:52.904908Z",
+      "category": null,
+      "change_history": []
+    }
+  },
+  {
+    "label": "PUT /tasks/:id (update)",
+    "status": 422,
+    "ms": 5,
+    "ok": false,
+    "body": {
+      "detail": "Validation failed: body.target_date: Field required",
+      "error_code": "VALIDATION_ERROR"
+    }
+  },
+  {
+    "label": "PATCH /tasks/:id/complete (mark done)",
+    "status": 422,
+    "ms": 5,
+    "ok": false,
+    "body": {
+      "detail": "Validation failed: body: Field required",
+      "error_code": "VALIDATION_ERROR"
+    }
+  },
+  {
+    "label": "GET /tasks/:id (after completion)",
+    "status": 200,
+    "ms": 6,
+    "ok": true,
+    "body": {
+      "title": "Test Task Alpha",
+      "description": "Created during automated testing",
+      "target_date": "2026-07-10",
+      "estimated_duration_minutes": null,
+      "start_time": null,
+      "end_time": null,
+      "id": "8a659266-f6d5-4a80-81d6-c286daa9e63c",
+      "user_id": "30112b9d-024b-475e-bd89-81c0ebe2b188",
+      "category_id": null,
+      "is_completed": false,
+      "actual_duration_minutes": null,
+      "completion_notes": null,
+      "completed_at": null,
+      "created_at": "2026-07-05T15:06:52.904908Z",
+      "updated_at": "2026-07-05T15:06:52.904908Z",
+      "category": null,
+      "change_history": []
+    }
+  },
+  {
+    "label": "GET /tasks/nonexistent (expect 404)",
+    "status": 404,
+    "ms": 5,
+    "ok": false,
+    "body": {
+      "detail": "Task not found."
+    }
+  },
+  {
+    "label": "GET /tasks (no auth - expect 401/403)",
+    "status": 401,
+    "ms": 3,
+    "ok": false,
+    "body": {
+      "detail": "Not authenticated"
+    }
+  },
+  {
+    "label": "GET /analytics/stats",
+    "status": 404,
+    "ms": 2,
+    "ok": false,
+    "body": {
+      "detail": "Not Found"
+    }
+  },
+  {
+    "label": "GET /analytics/stats (no auth - expect 401)",
+    "status": 404,
+    "ms": 2,
+    "ok": false,
+    "body": {
+      "detail": "Not Found"
+    }
+  },
+  {
+    "label": "GET /agent/briefing (1st call)",
+    "status": 200,
+    "ms": 847,
+    "ok": true,
+    "body": {
+      "briefing": "Good morning, TestRunner! You have 0 tasks scheduled for today and 1 overdue. Let's make today count!"
+    }
+  },
+  {
+    "label": "GET /agent/briefing (2nd - cached)",
+    "status": 200,
+    "ms": 830,
+    "ok": true,
+    "body": {
+      "briefing": "Good morning, TestRunner! You have 0 tasks scheduled for today and 1 overdue. Let's make today count!"
+    }
+  },
+  {
+    "label": "GET /agent/briefing (no auth - expect 401)",
+    "status": 401,
+    "ms": 6,
+    "ok": false,
+    "body": {
+      "detail": "Not authenticated"
+    }
+  },
+  {
+    "label": "POST /agent/suggest-subtasks",
+    "status": 200,
+    "ms": 837,
+    "ok": true,
+    "body": [
+      "Analyze requirements",
+      "Execute draft",
+      "Review and refine"
+    ]
+  },
+  {
+    "label": "POST /agent/chat (greeting)",
+    "status": 200,
+    "ms": 3111,
+    "ok": true,
+    "body": {
+      "response": "Hello! I can help you with a few things to boost your productivity:\n\n*   **Analyze your productivity patterns** and provide insights into your task statistics, completion rates, and rescheduling habits.\n*   **Plan and organize new goals or projects** by creating categories and scaffolding tasks for you.\n*   **Reschedule and optimize your overdue tasks** or chronically delayed items to help you get back on track.\n\nJust let me know what you need assistance with!"
+    }
+  },
+  {
+    "label": "POST /agent/chat (task count query)",
+    "status": 200,
+    "ms": 11360,
+    "ok": true,
+    "body": {
+      "response": "You have 2 tasks in total."
+    }
+  },
+  {
+    "label": "POST /agent/insights",
+    "status": 200,
+    "ms": 7367,
+    "ok": true,
+    "body": {
+      "response": "Here's a quick summary of your productivity:\n\nYou currently have 2 tasks in total, with 2 pending and 1 overdue. Your completion rate is 0%, as you haven't completed any tasks yet. All your tasks are uncategorized. You haven't rescheduled any tasks.\n\nHere are some recommendations to boost your productivity:\n\n*   **Tackle the overdue task:** Prioritize completing your overdue task to get back on track. Consider breaking it down into smaller, manageable steps if it feels overwhelming.\n*   **Categorize your tasks:** Organizing your tasks into categories like \"Work,\" \"Personal,\" or \"Urgent\" can help you manage your workload more effectively and provide clarity on what needs your attention.\n*   **Set realistic goals:** Ensure your tasks are achievable within your timeframe. Reviewing and adjusting your deadlines can prevent tasks from becoming overdue.\n*   **Start with one small win:** To improve your completion rate, pick one pending task and commit to finishing it. Even a small accomplishment can build momentum.\n*   **Minimize distractions:** Create a focused environment when working on tasks to improve concentration and efficiency."
+    }
+  },
+  {
+    "label": "POST /agent/plan",
+    "status": 0,
+    "ms": 15003,
+    "ok": false,
+    "body": "timed out"
+  },
+  {
+    "label": "POST /agent/reschedule",
+    "status": 0,
+    "ms": 15004,
+    "ok": false,
+    "body": "timed out"
+  },
+  {
+    "label": "DELETE /tasks/:id",
+    "status": 204,
+    "ms": 12,
+    "ok": true,
+    "body": ""
+  }
+]

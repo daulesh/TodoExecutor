@@ -1,0 +1,20 @@
+DATABASE_URL=postgresql+asyncpg://admin:admin@localhost:5432/todo_dev
+JWT_SECRET_KEY=default_super_secret_jwt_key_change_me_in_production
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Google OAuth2 Credentials (replaceholders)
+GOOGLE_CLIENT_ID=google-client-id-placeholder
+GOOGLE_CLIENT_SECRET=google-client-secret-placeholder
+GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+
+# Gemini API Key (required for ADK 2.0 Agentic AI features)
+GEMINI_API_KEY=gemini-api-key-placeholder
+
+# Gemini Model configuration (e.g. gemini-2.5-flash or gemini-2.5-flash-lite)
+GEMINI_MODEL=gemini-2.5-flash
+
+# Maximum timeout in seconds for Gemini agent workflows
+# Multi-step planning chains (orchestrator → planner → DB tools) need 4+ LLM calls.
+# 30s is too short; 120s is safe for all agent types.
+GEMINI_TIMEOUT=120

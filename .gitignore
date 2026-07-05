@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Next.js build output
+.next/
+out/
+build/
+
+# Python environment & cache
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pip-log.txt
+
+# Environment/Secrets (Confidential)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+*.env
+*.env.*
+# But track example env files
+!.env.example
+!.envexample
+
+# Logs & Debug
+logs/
+backend/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE / OS specific files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.pem
+
+# docs — only private operational files are gitignored; public docs are tracked
+docs/private/
+
+#agent related files
+.agents/
+
+# project planning / tracking files
+progress.md
+implementation.md
