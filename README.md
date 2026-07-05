@@ -242,4 +242,4 @@ Breaks any task into 3–5 concrete actionable steps using Gemini, with one-clic
 
 ## 📜 License
 
-MIT License — free for personal and educational use.
+This project is licensed under the [MIT License](LICENSE).
