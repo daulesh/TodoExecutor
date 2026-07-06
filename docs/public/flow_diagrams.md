@@ -19,10 +19,10 @@ graph TB
     end
 
     subgraph Backend["⚙️ FastAPI Backend"]
-        AuthAPI[/auth/\nJWT · OAuth]
-        TasksAPI[/tasks/\nCRUD + Complete]
-        CatsAPI[/categories/\nCRUD]
-        AgentAPI[/agent/\nAI Endpoints]
+        AuthAPI["/auth/\nJWT · OAuth"]
+        TasksAPI["/tasks/\nCRUD + Complete"]
+        CatsAPI["/categories/\nCRUD"]
+        AgentAPI["/agent/\nAI Endpoints"]
     end
 
     subgraph Agents["🤖 Google ADK 2.0 Agent Fleet"]
@@ -160,7 +160,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    Start([Trigger:\n"Reschedule my overdue tasks"]) --> Fetch
+    Start(["Trigger:\nReschedule my overdue tasks"]) --> Fetch
 
     subgraph ReschedulerAgent["🔄 Rescheduler Agent"]
         Fetch[get_chronically_rescheduled_tasks\nScans: overdue + rescheduled before]
@@ -251,8 +251,8 @@ graph TB
 
     subgraph AgentTools["ADK Agent Tool Calls (isolated sessions)"]
         Tool1[create_category\nSessionLocal → session B\ncommit → close]
-        Tool2[create_task #1\nSessionLocal → session C\ncommit → close]
-        Tool3[create_task #2\nSessionLocal → session D\ncommit → close]
+        Tool2["create_task #1\nSessionLocal → session C\ncommit → close"]
+        Tool3["create_task #2\nSessionLocal → session D\ncommit → close"]
     end
 
     Endpoint -->|asyncio.gather| Tool1
@@ -272,16 +272,16 @@ graph TB
 
 ```mermaid
 graph LR
-    Welcome[/welcome\nLanding Page] -->|Login| Login[/login]
-    Welcome -->|Register| Register[/register]
-    Login -->|JWT stored| Dashboard[/ Dashboard\nToday's Tasks]
+    Welcome["/welcome\nLanding Page"] -->|Login| Login["/login"]
+    Welcome -->|Register| Register["/register"]
+    Login -->|JWT stored| Dashboard["/dashboard\nToday's Tasks"]
     Register -->|JWT stored| Dashboard
 
-    Dashboard --> TaskEdit[/tasks/taskId\nEdit + AI Subtasks]
-    Dashboard --> DateView[/date/date\nDate-specific Tasks]
-    Dashboard --> Tasks[/tasks\nAll by Category]
-    Dashboard --> Analytics[/analytics\nStats + Coach]
-    Dashboard --> NewTask[/tasks/new\nCreate Task]
+    Dashboard --> TaskEdit["/tasks/taskId\nEdit + AI Subtasks"]
+    Dashboard --> DateView["/date/date\nDate-specific Tasks"]
+    Dashboard --> Tasks["/tasks\nAll by Category"]
+    Dashboard --> Analytics["/analytics\nStats + Coach"]
+    Dashboard --> NewTask["/tasks/new\nCreate Task"]
 
     Tasks --> TaskEdit
     DateView --> TaskEdit
