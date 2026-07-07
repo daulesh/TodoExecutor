@@ -1,6 +1,8 @@
 "use client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+import { getBrowserApiBase } from "./api-base";
+
+const API_BASE_URL = getBrowserApiBase();
 
 interface FetchOptions extends RequestInit {
     skipAuth?: boolean;

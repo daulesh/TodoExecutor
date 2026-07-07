@@ -1,0 +1,13 @@
+# Local development dependencies (install on top of production deps)
+-r requirements.txt
+
+# Database migrations
+alembic>=1.13.1,<2
+
+# Testing
+pytest>=8.2.2,<9
+pytest-asyncio>=0.23.7
+
+# Dev tooling
+fastapi-cli>=0.0.27
+email-validator>=2.3.0

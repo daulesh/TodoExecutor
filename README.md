@@ -67,12 +67,6 @@ Rather than a passive to-do list, TaskExecutor **thinks alongside you**:
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.11+
-- Node.js 20+
-- PostgreSQL 15+ (running locally)
-- Google Gemini API Key ([get one here](https://aistudio.google.com/apikey))
-
 ### 1. Clone the Repository
 
 ```bash
@@ -80,7 +74,106 @@ git clone https://github.com/YOUR_USERNAME/TodoExecutor.git
 cd TodoExecutor
 ```
 
-### 2. Backend Setup
+---
+
+### Option A: Docker (Recommended)
+
+Runs PostgreSQL, the FastAPI backend, and the Next.js frontend together with a single command.
+
+#### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose v2+
+- Google Gemini API Key ([get one here](https://aistudio.google.com/apikey))
+
+#### 1. Configure environment
+
+```bash
+copy .env.example .env         # Windows
+# cp .env.example .env         # macOS / Linux
+```
+
+Edit `.env` in the project root. At minimum, set your Gemini key:
+
+```env
+GEMINI_API_KEY=your-gemini-api-key-here
+SECRET_KEY=your-strong-secret-key-here
+```
+
+Other variables are optional — defaults work for local use:
+
+| Variable | Default | Description |
+|---|---|---|
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `admin` / `admin` / `todo_dev` | Database credentials |
+| `POSTGRES_PORT` | `5432` | Host port for PostgreSQL |
+| `BACKEND_PORT` | `8000` | Host port for the API |
+| `FRONTEND_PORT` | `3000` | Host port for the web app |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | Gemini model name |
+| `GOOGLE_CLIENT_ID` | *(empty)* | Optional Google OAuth client ID |
+
+#### 2. Start all services
+
+```bash
+docker compose up -d --build
+```
+
+Docker Compose will:
+- Start **PostgreSQL 16** and wait until it is healthy
+- Build and start the **backend** (tables are created automatically on first boot)
+- Build and start the **frontend** (proxies `/api/v1` to the backend over the internal network)
+
+#### 3. Open the app
+
+| Service | URL |
+|---|---|
+| **Web app** | http://localhost:3000 |
+| **API docs** | http://localhost:8000/docs |
+| **Health check** | http://localhost:8000/health |
+
+Ports follow `FRONTEND_PORT` and `BACKEND_PORT` in your `.env` if you changed them.
+
+#### Useful Docker commands
+
+```bash
+# View logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
+
+# Stop and remove database volume (fresh start)
+docker compose down -v
+
+# Rebuild after code changes
+docker compose up -d --build
+```
+
+#### Optional: seed the demo account
+
+The demo user is not created automatically in Docker. Either **register** at http://localhost:3000/register, or seed from your host machine (requires Python 3.11+):
+
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # macOS / Linux
+pip install -r requirements-dev.txt
+
+# Match POSTGRES_* values from the root .env
+set DATABASE_URL=postgresql+asyncpg://admin:admin@localhost:5432/todo_dev   # Windows
+# export DATABASE_URL=postgresql+asyncpg://admin:admin@localhost:5432/todo_dev   # macOS / Linux
+python scripts/seed_data.py
+```
+
+---
+
+### Option B: Local Development
+
+#### Prerequisites
+- Python 3.11+
+- Node.js 20+
+- PostgreSQL 15+ (running locally)
+- Google Gemini API Key ([get one here](https://aistudio.google.com/apikey))
+
+#### 2. Backend Setup
 
 ```bash
 cd backend
@@ -90,8 +183,8 @@ python -m venv .venv
 .venv\Scripts\activate        # Windows
 # source .venv/bin/activate   # macOS / Linux
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (includes alembic, pytest, dev tooling)
+pip install -r requirements-dev.txt
 
 # Set up environment variables
 copy .envexample .env         # Windows
@@ -118,7 +211,7 @@ uvicorn app.main:app --reload
 
 > On first startup, SQLAlchemy automatically creates all database tables.
 
-### 3. Frontend Setup
+#### 3. Frontend Setup
 
 ```bash
 cd frontend
@@ -131,7 +224,9 @@ npm run dev
 
 ## 🗄️ Database Setup
 
-Create a PostgreSQL database before starting the backend:
+**Using Docker?** PostgreSQL is provisioned automatically by `docker compose` — skip this section.
+
+For local development, create a PostgreSQL database before starting the backend:
 
 ```sql
 CREATE DATABASE todo_dev;
@@ -158,6 +253,8 @@ A demo account is pre-seeded for testing:
 
 ```
 TaskExecutor/
+├── docker-compose.yml           # Full-stack Docker setup
+├── .env.example                 # Root env template for Docker Compose
 ├── backend/
 │   ├── app/
 │   │   ├── agents/              # AI Agent implementations (ADK 2.0)
@@ -175,7 +272,8 @@ TaskExecutor/
 │   │   ├── models/              # SQLAlchemy ORM models
 │   │   └── schemas/             # Pydantic request/response schemas
 │   ├── .envexample              # Environment variable template
-│   └── requirements.txt
+│   ├── requirements.txt       # Production / Docker deps
+│   └── requirements-dev.txt   # Local dev deps (migrations, tests)
 ├── frontend/
 │   └── src/app/
 │       ├── (auth)/              # Login & Register pages
@@ -237,6 +335,22 @@ Breaks any task into 3–5 concrete actionable steps using Gemini, with one-clic
 - Per-user data isolation enforced at every query level
 - Gemini API calls use only task metadata (titles, dates, counts) — **never personal content**
 - Every AI-initiated schedule change is logged in `task_change_log` with a human-readable reason
+- In Docker, the browser never calls FastAPI directly — all requests go to Next.js at `/api/v1`, which proxies to the backend over the internal Docker network (`BACKEND_INTERNAL_URL`, e.g. `http://backend:8000`); FastAPI and PostgreSQL sit on that internal network, with Next.js as the public entry point
+- Task titles and descriptions are currently stored as **plaintext** in PostgreSQL; JWT auth and network isolation limit normal access, but a `pg_dump`, volume snapshot, or backup would still expose readable content
+
+**What about plaintext in the database?**
+
+You may notice that task titles and descriptions sit in PostgreSQL as readable text. Network isolation and JWT auth cover normal access paths, but they do not help if someone obtains a database dump or backup. An improvement that could be implemented here is **per-user application-level encryption**:
+
+Each user would have a random 256-bit data key (`K_data`), never stored in plaintext. Instead, it would be wrapped (encrypted) with a key derived from the user's password:
+
+`K_user = Argon2id(password, per_user_salt)`
+
+The database would hold only `encrypted_data_key`, `ciphertext`, `nonce`, and `salt` — not the raw keys or readable task text.
+
+On **login**, the backend would derive `K_user` from the password, unwrap `K_data`, and keep it in memory for the session. On **read**, task fields would be decrypted in the API layer before the response is sent. On **write**, fields would be encrypted with **AES-256-GCM** (or XChaCha20-Poly1305) using `K_data` and a unique nonce per field. On **password change**, `K_data` would be re-wrapped with a new `K_user` — individual tasks would not need to be re-encrypted.
+
+This would protect against **database compromise and backup leakage**: a dump alone would not be enough to read task content without the user's password. It would not provide zero-knowledge semantics — the running backend would still hold `K_data` in memory while serving requests.
 
 ---
 

@@ -37,7 +37,7 @@ async def run_rescheduler_agent(user_id: uuid.UUID, user_message: str) -> str:
             stmt = (
                 select(Task)
                 .options(selectinload(Task.change_history))
-                .where(Task.user_id == user_id, Task.is_completed == False)
+                .where(Task.user_id == user_id, Task.is_completed.is_(False))
                 .order_by(Task.target_date.asc())
             )
             tasks = (await session.scalars(stmt)).all()

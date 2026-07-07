@@ -37,7 +37,7 @@ async def run_analytics_agent(db: AsyncSession, user_id: uuid.UUID, user_message
         ) or 0
         completed = await db.scalar(
             select(func.count(Task.id)).where(
-                and_(Task.user_id == user_id, Task.is_completed == True)
+                and_(Task.user_id == user_id, Task.is_completed.is_(True))
             )
         ) or 0
         pending = total - completed
@@ -48,7 +48,7 @@ async def run_analytics_agent(db: AsyncSession, user_id: uuid.UUID, user_message
             select(func.count(Task.id)).where(
                 and_(
                     Task.user_id == user_id,
-                    Task.is_completed == False,
+                    Task.is_completed.is_(False),
                     Task.target_date < today_val
                 )
             )
@@ -69,7 +69,7 @@ async def run_analytics_agent(db: AsyncSession, user_id: uuid.UUID, user_message
                     and_(
                         Task.user_id == user_id,
                         Task.category_id == cat.id,
-                        Task.is_completed == True
+                        Task.is_completed.is_(True)
                     )
                 )
             ) or 0
@@ -82,15 +82,15 @@ async def run_analytics_agent(db: AsyncSession, user_id: uuid.UUID, user_message
         # Uncategorized tasks
         uncat_total = await db.scalar(
             select(func.count(Task.id)).where(
-                and_(Task.user_id == user_id, Task.category_id == None)
+                and_(Task.user_id == user_id, Task.category_id.is_(None))
             )
         ) or 0
         uncat_completed = await db.scalar(
             select(func.count(Task.id)).where(
                 and_(
                     Task.user_id == user_id,
-                    Task.category_id == None,
-                    Task.is_completed == True
+                    Task.category_id.is_(None),
+                    Task.is_completed.is_(True)
                 )
             )
         ) or 0

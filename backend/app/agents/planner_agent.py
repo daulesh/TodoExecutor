@@ -85,7 +85,7 @@ async def run_planner_agent(user_id: uuid.UUID, user_message: str) -> str:
         title: str,
         description: str,
         target_date_str: str,
-        category_id_str: str = None
+        category_id_str: str | None = None
     ) -> str:
         """
         Creates a new structured task and saves it to the database.
@@ -129,18 +129,23 @@ async def run_planner_agent(user_id: uuid.UUID, user_message: str) -> str:
             })
 
     # 2. Instantiate ADK Agent with planning tools
+    # Inject real today's date into the prompt so the LLM anchors scheduling to the current day.
+    today_str = date.today().isoformat()  # e.g. "2026-07-07"
+
     planner_agent = Agent(
         model=settings.GEMINI_MODEL,
         name="task_planner_agent",
         instruction=(
-            "You are an expert productivity planner. Your role is to help users organize their objectives "
-            "by creating structured categories and lists of tasks. "
+            f"You are an expert productivity planner. Your role is to help users organize their objectives "
+            f"by creating structured categories and lists of tasks. "
+            f"CRITICAL — TODAY'S REAL DATE IS: {today_str}. "
+            f"You MUST treat {today_str} as 'today' when planning.\n"
             "Always follow these steps:\n"
             "1. First, retrieve the user's existing categories using get_user_categories.\n"
             "2. If the user's objective warrants a new category (e.g., a specific project or topic), "
             "create it using create_category.\n"
-            "3. Break down the user's objective into smaller, actionable tasks (e.g., 3 to 7 tasks) "
-            "spread across logical target dates (starting from today YYYY-MM-DD or tomorrow).\n"
+            f"3. Break down the user's objective into smaller, actionable tasks (e.g., 3 to 7 tasks) "
+            f"spread across logical target dates starting from {today_str} or the following few days.\n"
             "4. Create each task in the database using the create_task tool, associating it with the correct category ID.\n"
             "5. Finally, write a pleasant summary explaining the plan you created and listing the tasks."
         ),
