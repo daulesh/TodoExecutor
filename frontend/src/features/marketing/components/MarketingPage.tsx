@@ -5,7 +5,7 @@
  */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Container, Button, Typography, Grid, Card, Box, Chip } from "@mui/material";
@@ -21,7 +21,7 @@ import {
     Chat,
     FileDownload,
 } from "@mui/icons-material";
-import { useThemeMode } from "@/components/providers/Providers";
+import { useThemeMode } from "@/components/providers/ThemeProvider";
 
 /* Feature card data: title, icon, description, color, and optional badge */
 const FEATURES = [
@@ -79,23 +79,16 @@ const AI_HIGHLIGHTS = [
     { icon: <FileDownload sx={{ fontSize: 20, color: "#8B5CF6" }} />, label: "JSON Export" },
 ];
 
-export default function MarketingPage() {
+export function MarketingPage() {
     /* Resolves theme mode for conditional styling across sections */
     const { resolvedMode } = useThemeMode();
     const isDark = resolvedMode === "dark";
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     return (
         <Box
             sx={{
                 minHeight: "100vh",
-                background: !mounted
-                    ? "#05040a"
-                    : isDark
+                background: isDark
                     ? "radial-gradient(circle at 10% 20%, rgba(90, 47, 184, 0.15) 0%, rgba(0, 0, 0, 0) 40%), radial-gradient(circle at 90% 80%, rgba(46, 203, 113, 0.1) 0%, rgba(0, 0, 0, 0) 40%), #05040a"
                     : "radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.06) 0%, rgba(0, 0, 0, 0) 40%), radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.05) 0%, rgba(0, 0, 0, 0) 40%), #F9FAFB",
                 color: "text.primary",

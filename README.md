@@ -275,14 +275,27 @@ TaskExecutor/
 │   ├── requirements.txt       # Production / Docker deps
 │   └── requirements-dev.txt   # Local dev deps (migrations, tests)
 ├── frontend/
-│   └── src/app/
-│       ├── (auth)/              # Login & Register pages
-│       ├── (dashboard)/         # Main app pages
-│       │   ├── dashboard/       # Today's tasks + AI briefing
-│       │   ├── tasks/           # Category accordion + AI planner
-│       │   ├── analytics/       # Stats + AI coach
-│       │   └── tasks/[id]/      # Task edit + AI subtask generator
-│       └── welcome/             # Landing page
+│   └── src/
+│       ├── app/                 # Routing only (thin page.tsx wrappers)
+│       │   ├── (auth)/          # Login & Register
+│       │   ├── (dashboard)/     # Dashboard, tasks, analytics, date views
+│       │   ├── (marketing)/welcome/
+│       │   └── api/v1/          # Next.js proxy to FastAPI
+│       ├── features/            # Feature-owned UI, hooks, and API clients
+│       │   ├── tasks/           # Task CRUD, categories, completion
+│       │   ├── dashboard/       # Today view, date view, calendar
+│       │   ├── analytics/       # Stats and export
+│       │   ├── auth/            # Login/register forms
+│       │   ├── agent/           # AI chat, briefing, planner, coach
+│       │   └── marketing/       # Landing page
+│       ├── components/
+│       │   ├── ui/              # Shared primitives (BackButton, PageHeader, etc.)
+│       │   ├── layout/          # DashboardShell, ThemeModeSwitcher
+│       │   ├── shared/          # Cross-feature composites (TaskRow, CompletionModal)
+│       │   └── providers/       # ThemeProvider, AuthProvider
+│       ├── lib/                 # fetcher, API base URLs
+│       ├── types/               # Shared TypeScript types
+│       └── constants/           # Route paths and nav items
 └── docs/
     └── public/                  # Project documentation
 ```

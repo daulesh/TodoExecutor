@@ -29,7 +29,7 @@ export async function getServerApiBase(): Promise<string> {
     }
 
     const internalFrontendUrl =
-        process.env.INTERNAL_FRONTEND_URL || "http://frontend:3000";
+        process.env.INTERNAL_FRONTEND_URL || "http://localhost:3000";
 
     return `${internalFrontendUrl}${DEFAULT_BROWSER_API_BASE}`;
 }

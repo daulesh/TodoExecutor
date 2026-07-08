@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_INTERNAL_URL =
-    process.env.BACKEND_INTERNAL_URL || "http://backend:8000";
+    process.env.BACKEND_INTERNAL_URL || "http://localhost:8000";
 
 const FORWARD_REQUEST_HEADERS = [
     "authorization",
