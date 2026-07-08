@@ -21,9 +21,4 @@ async def export_user_data_json(
         .order_by(Task.target_date.asc(), Task.start_time.asc())
     )
     tasks = (await db.scalars(stmt)).all()
-    
-    # Map target_time to start_time
-    for t in tasks:
-        t.target_time = t.start_time
-        
     return list(tasks)

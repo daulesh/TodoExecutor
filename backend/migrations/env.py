@@ -1,11 +1,22 @@
 import asyncio
+import sys
 from logging.config import fileConfig
+from pathlib import Path
 
+from dotenv import load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+
+backend_dir = Path(__file__).resolve().parents[1]
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+
+# Load env files before importing app settings (works from repo root or backend/)
+load_dotenv(backend_dir / ".env")
+load_dotenv(backend_dir.parent / ".env")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,7 +31,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 from app.core.config import settings
 from app.core.database import Base
-from app.models.models import User, Category, Task, TaskChangeLog
+from app.models.models import User, Category, Task, TaskChangeLog, LlmUsageLog
 
 target_metadata = Base.metadata
 

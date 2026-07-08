@@ -1,7 +1,5 @@
 import os
 from typing import List
-from pydantic import ConfigDict
-from pydantic_core import MultiHostUrl
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -37,6 +35,9 @@ class Settings:
     # Planning workflows require multiple sequential LLM calls (routing + planner + DB tools)
     # so 30s is too short. Default to 120s for reliable multi-agent operation.
     GEMINI_TIMEOUT: int = int(os.getenv("GEMINI_TIMEOUT", "120"))
+
+    # Per-user monthly LLM token quota (0 = unlimited)
+    LLM_MONTHLY_TOKEN_QUOTA: int = int(os.getenv("LLM_MONTHLY_TOKEN_QUOTA", "100000"))
     
     # CORS Configuration
     BACKEND_CORS_ORIGINS: List[str] = [

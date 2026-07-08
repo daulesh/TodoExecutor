@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.api.v1.api import api_router
 from app.core.database import Base, engine
-from app.models.models import User, Category, Task, TaskChangeLog
+from app.models.models import User, Category, Task, TaskChangeLog, LlmUsageLog
 
 import os
 
@@ -24,10 +24,9 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
     handlers=[
         logging.FileHandler(log_file, encoding="utf-8"),
-        logging.StreamHandler()
-    ]
+        logging.StreamHandler(),
+    ],
 )
-# Trigger reload to clear hung connection
 logger = logging.getLogger(__name__)
 
 app = FastAPI(

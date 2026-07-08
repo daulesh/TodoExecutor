@@ -18,3 +18,7 @@ GEMINI_MODEL=gemini-2.5-flash
 # Multi-step planning chains (orchestrator → planner → DB tools) need 4+ LLM calls.
 # 30s is too short; 120s is safe for all agent types.
 GEMINI_TIMEOUT=120
+
+# Per-user monthly LLM token quota across all Gemini agent endpoints
+# Set to 0 for unlimited usage (useful in local development)
+LLM_MONTHLY_TOKEN_QUOTA=100000

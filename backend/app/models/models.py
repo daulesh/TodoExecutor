@@ -11,10 +11,10 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     username: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     auth_provider: Mapped[str] = mapped_column(String(50), default="local", nullable=False)
-    google_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=True)
-    avatar_url: Mapped[str] = mapped_column(String(500), nullable=True)
+    google_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -26,6 +26,9 @@ class User(Base):
 
     categories: Mapped[List["Category"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     tasks: Mapped[List["Task"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    llm_usage_logs: Mapped[List["LlmUsageLog"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
 
 class Category(Base):
@@ -35,7 +38,7 @@ class Category(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title: Mapped[str] = mapped_column(String(50), nullable=False)
     color_hex: Mapped[str] = mapped_column(String(7), default="#6C63FF", nullable=False)
-    icon: Mapped[str] = mapped_column(String(50), nullable=True)
+    icon: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="categories")
@@ -51,17 +54,17 @@ class Task(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    category_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
+    category_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     target_date: Mapped[date] = mapped_column(Date, nullable=False)
-    estimated_duration_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
-    start_time: Mapped[time] = mapped_column(Time, nullable=True)
-    end_time: Mapped[time] = mapped_column(Time, nullable=True)
+    estimated_duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    start_time: Mapped[time | None] = mapped_column(Time, nullable=True)
+    end_time: Mapped[time | None] = mapped_column(Time, nullable=True)
     is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    actual_duration_minutes: Mapped[int] = mapped_column(Integer, nullable=True)
-    completion_notes: Mapped[str] = mapped_column(Text, nullable=True)
-    completed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    actual_duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    completion_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 
@@ -86,3 +89,24 @@ class TaskChangeLog(Base):
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     task: Mapped["Task"] = relationship(back_populates="change_history")
+
+
+class LlmUsageLog(Base):
+    __tablename__ = "llm_usage_log"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    agent_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    endpoint: Mapped[str] = mapped_column(String(100), nullable=False)
+    model: Mapped[str] = mapped_column(String(100), nullable=False)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    thoughts_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    cached_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    request_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    user: Mapped["User"] = relationship(back_populates="llm_usage_logs")

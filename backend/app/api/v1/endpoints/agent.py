@@ -4,21 +4,25 @@ import logging
 import os
 import uuid
 from datetime import date, time, datetime
-from functools import partial
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select, func
-
-from google import genai
-from google.genai import types
 
 from app.api.deps import DatabaseSession, CurrentUser
 from app.core.config import settings
 from app.agents.analytics_agent import run_analytics_agent
+from app.agents.briefing_agent import run_briefing_agent
 from app.agents.planner_agent import run_planner_agent
 from app.agents.rescheduler_agent import run_rescheduler_agent
 from app.agents.orchestrator_agent import run_orchestrator_agent
+from app.agents.subtasks_agent import run_subtasks_agent
+from app.agents.runner_utils import TokenUsage
 from app.models.models import Task
+from app.services.llm_usage import (
+    enforce_llm_quota,
+    get_user_usage_summary,
+    record_llm_usage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,34 +36,28 @@ router = APIRouter()
 _briefing_cache: dict[str, str] = {}
 
 
-def _sync_gemini_generate(prompt: str, response_mime_type: str | None = None) -> str:
-    """
-    Runs a synchronous Gemini generate_content call.
-    MUST be called via run_in_executor to avoid blocking the async event loop.
-    """
-    # Configure a 15-second timeout to prevent requests from hanging indefinitely
-    client = genai.Client(http_options=types.HttpOptions(timeout=15))
-    config = None
-    if response_mime_type:
-        config = types.GenerateContentConfig(response_mime_type=response_mime_type)
-    
-    response = client.models.generate_content(
-        model=settings.GEMINI_MODEL,
-        contents=prompt,
-        config=config,
+def _is_gemini_configured() -> bool:
+    return bool(settings.GEMINI_API_KEY) and settings.GEMINI_API_KEY != "gemini-api-key-placeholder"
+
+
+async def _persist_agent_usage(
+    db: DatabaseSession,
+    *,
+    user_id: uuid.UUID,
+    agent_name: str,
+    endpoint: str,
+    usage: TokenUsage,
+    request_id: uuid.UUID,
+) -> None:
+    await record_llm_usage(
+        db,
+        user_id=user_id,
+        agent_name=agent_name,
+        endpoint=endpoint,
+        usage=usage,
+        request_id=request_id,
     )
-    text = response.text or ""
-    return text.strip()
-
-
-async def run_gemini_in_thread(prompt: str, response_mime_type: str | None = None) -> str:
-    """
-    Wraps the synchronous Gemini SDK call in asyncio thread pool executor
-    so that it does NOT block the uvicorn event loop.
-    """
-    loop = asyncio.get_event_loop()
-    fn = partial(_sync_gemini_generate, prompt, response_mime_type)
-    return await loop.run_in_executor(None, fn)
+    await db.commit()
 
 
 # ---------- Request / Response Models ----------
@@ -92,8 +90,27 @@ class SuggestSubtasksRequest(BaseModel):
     title: str
     description: str = ""
 
+class AgentUsageResponse(BaseModel):
+    monthly_quota: int | None
+    tokens_used_this_month: int
+    tokens_remaining: int | None
+    percent_used: float | None
+    quota_enabled: bool
+    model: str
+    period_start: str
+
 
 # ---------- Endpoints ----------
+
+@router.get("/usage", response_model=AgentUsageResponse)
+async def get_agent_usage(
+    db: DatabaseSession,
+    current_user: CurrentUser,
+):
+    """Return the current user's LLM token usage for this month."""
+    summary = await get_user_usage_summary(db, current_user.id)
+    return AgentUsageResponse(**summary)
+
 
 @router.post("/insights", response_model=AgentInsightsResponse)
 async def generate_coaching_insights(
@@ -106,7 +123,7 @@ async def generate_coaching_insights(
     """
     logger.info("POST /insights - user=%s", current_user.id)
 
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "gemini-api-key-placeholder":
+    if not _is_gemini_configured():
         return AgentInsightsResponse(
             response=(
                 f"[Development Mode - Mock Gemini Coach]: I received your request: '{request_data.message}'. "
@@ -115,9 +132,12 @@ async def generate_coaching_insights(
             )
         )
 
+    await enforce_llm_quota(db, current_user.id)
+    request_id = uuid.uuid4()
+
     logger.info("Running analytics agent for user=%s", current_user.id)
     try:
-        response_text = await asyncio.wait_for(
+        result = await asyncio.wait_for(
             run_analytics_agent(
                 db=db,
                 user_id=current_user.id,
@@ -131,13 +151,27 @@ async def generate_coaching_insights(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="The Productivity Coach agent timed out. Please try again later."
         )
-    logger.info("Analytics agent completed for user=%s", current_user.id)
-    return AgentInsightsResponse(response=response_text)
+
+    await _persist_agent_usage(
+        db,
+        user_id=current_user.id,
+        agent_name="analytics_insights_agent",
+        endpoint="/agent/insights",
+        usage=result.usage,
+        request_id=request_id,
+    )
+    logger.info(
+        "Analytics agent completed for user=%s tokens=%d",
+        current_user.id,
+        result.usage.total_tokens,
+    )
+    return AgentInsightsResponse(response=result.text)
 
 
 @router.post("/plan", response_model=AgentPlanResponse)
 async def generate_task_plan(
     request_data: AgentPlanRequest,
+    db: DatabaseSession,
     current_user: CurrentUser,
 ):
     """
@@ -145,7 +179,7 @@ async def generate_task_plan(
     """
     logger.info("POST /plan - user=%s message=%r", current_user.id, request_data.message[:80])
 
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "gemini-api-key-placeholder":
+    if not _is_gemini_configured():
         return AgentPlanResponse(
             response=(
                 f"[Development Mode - Mock Gemini Planner]: I received your planning request: '{request_data.message}'. "
@@ -154,9 +188,12 @@ async def generate_task_plan(
             )
         )
 
+    await enforce_llm_quota(db, current_user.id)
+    request_id = uuid.uuid4()
+
     logger.info("Running planner agent for user=%s", current_user.id)
     try:
-        response_text = await asyncio.wait_for(
+        result = await asyncio.wait_for(
             run_planner_agent(
                 user_id=current_user.id,
                 user_message=request_data.message
@@ -169,13 +206,23 @@ async def generate_task_plan(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="The Task Planner agent timed out. Please try again later."
         )
-    logger.info("Planner agent completed for user=%s", current_user.id)
-    return AgentPlanResponse(response=response_text)
+
+    await _persist_agent_usage(
+        db,
+        user_id=current_user.id,
+        agent_name="task_planner_agent",
+        endpoint="/agent/plan",
+        usage=result.usage,
+        request_id=request_id,
+    )
+    logger.info("Planner agent completed for user=%s tokens=%d", current_user.id, result.usage.total_tokens)
+    return AgentPlanResponse(response=result.text)
 
 
 @router.post("/chat", response_model=AgentChatResponse)
 async def chat_with_assistant(
     request_data: AgentChatRequest,
+    db: DatabaseSession,
     current_user: CurrentUser,
 ):
     """
@@ -183,14 +230,17 @@ async def chat_with_assistant(
     """
     logger.info("POST /chat - user=%s message=%r", current_user.id, request_data.message[:80])
 
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "gemini-api-key-placeholder":
+    if not _is_gemini_configured():
         return AgentChatResponse(
             response=f"[Development Mode - Mock Orchestrator]: Received your message: '{request_data.message}'. Please configure a valid GEMINI_API_KEY."
         )
 
+    await enforce_llm_quota(db, current_user.id)
+    request_id = uuid.uuid4()
+
     logger.info("Running orchestrator agent for user=%s", current_user.id)
     try:
-        response_text = await asyncio.wait_for(
+        result = await asyncio.wait_for(
             run_orchestrator_agent(
                 user_id=current_user.id,
                 user_message=request_data.message
@@ -203,13 +253,23 @@ async def chat_with_assistant(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="The Conversational Assistant timed out. Please try again later."
         )
-    logger.info("Orchestrator agent completed for user=%s", current_user.id)
-    return AgentChatResponse(response=response_text)
+
+    await _persist_agent_usage(
+        db,
+        user_id=current_user.id,
+        agent_name="conversational_orchestrator",
+        endpoint="/agent/chat",
+        usage=result.usage,
+        request_id=request_id,
+    )
+    logger.info("Orchestrator agent completed for user=%s tokens=%d", current_user.id, result.usage.total_tokens)
+    return AgentChatResponse(response=result.text)
 
 
 @router.post("/reschedule", response_model=AgentRescheduleResponse)
 async def run_rescheduler(
     request_data: AgentRescheduleRequest,
+    db: DatabaseSession,
     current_user: CurrentUser,
 ):
     """
@@ -217,14 +277,17 @@ async def run_rescheduler(
     """
     logger.info("POST /reschedule - user=%s", current_user.id)
 
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "gemini-api-key-placeholder":
+    if not _is_gemini_configured():
         return AgentRescheduleResponse(
-            response=f"[Development Mode - Mock Rescheduler]: Please set a valid GEMINI_API_KEY to trigger the scheduler."
+            response="[Development Mode - Mock Rescheduler]: Please set a valid GEMINI_API_KEY to trigger the scheduler."
         )
+
+    await enforce_llm_quota(db, current_user.id)
+    request_id = uuid.uuid4()
 
     logger.info("Running rescheduler agent for user=%s", current_user.id)
     try:
-        response_text = await asyncio.wait_for(
+        result = await asyncio.wait_for(
             run_rescheduler_agent(
                 user_id=current_user.id,
                 user_message=request_data.message
@@ -237,8 +300,17 @@ async def run_rescheduler(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail="The Schedule Optimizer agent timed out. Please try again later."
         )
-    logger.info("Rescheduler agent completed for user=%s", current_user.id)
-    return AgentRescheduleResponse(response=response_text)
+
+    await _persist_agent_usage(
+        db,
+        user_id=current_user.id,
+        agent_name="task_rescheduler_agent",
+        endpoint="/agent/reschedule",
+        usage=result.usage,
+        request_id=request_id,
+    )
+    logger.info("Rescheduler agent completed for user=%s tokens=%d", current_user.id, result.usage.total_tokens)
+    return AgentRescheduleResponse(response=result.text)
 
 
 @router.get("/briefing")
@@ -248,7 +320,6 @@ async def get_daily_briefing(
 ):
     """
     Generates a personalized daily greeting summarizing current stats.
-    The Gemini call is offloaded to a thread pool to avoid blocking the event loop.
     """
     logger.info("GET /briefing - user=%s", current_user.id)
     today_val = date.today()
@@ -294,11 +365,14 @@ async def get_daily_briefing(
         current_user.id, today_count, overdue_count, completed_today_count
     )
 
+    fallback = (
+        f"Good morning, {username}! You have {today_count} tasks scheduled for today "
+        f"and {overdue_count} overdue. Let's make today count!"
+    )
+
     # Return fast fallback if Gemini is not configured
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "gemini-api-key-placeholder":
-        return {
-            "briefing": f"Good morning, {username}! You have {today_count} tasks scheduled for today and {overdue_count} overdue. Let's make today count!"
-        }
+    if not _is_gemini_configured():
+        return {"briefing": fallback}
 
     stats_summary = (
         f"User: {username}. "
@@ -308,64 +382,96 @@ async def get_daily_briefing(
         f"Upcoming tasks in cue: {', '.join(task_titles) if task_titles else 'None'}."
     )
 
-    prompt = (
-        "You are a friendly, encouraging AI productivity coach. "
-        "Analyze the following daily statistics and generate a personalized morning greeting. "
-        "Make it very short (1 to 2 sentences max), motivational, and mention a specific task or statistic.\n\n"
-        f"Statistics:\n{stats_summary}"
-    )
+    user_message = f"Statistics:\n{stats_summary}"
 
-    # Check cache first to avoid repeating the same Gemini call on refresh
-    if prompt in _briefing_cache:
+    if user_message in _briefing_cache:
         logger.info("Serving briefing from cache for user=%s", current_user.id)
-        return {"briefing": _briefing_cache[prompt]}
+        return {"briefing": _briefing_cache[user_message]}
+
+    await enforce_llm_quota(db, current_user.id)
+    request_id = uuid.uuid4()
 
     try:
-        # ✅ Run sync Gemini SDK in thread pool - does NOT block the event loop
-        logger.info("Calling Gemini for briefing (in thread) for user=%s", current_user.id)
-        briefing_text = await run_gemini_in_thread(prompt)
-        logger.info("Gemini briefing received for user=%s", current_user.id)
-        
-        # Save to cache
+        logger.info("Running briefing agent for user=%s", current_user.id)
+        result = await asyncio.wait_for(
+            run_briefing_agent(
+                user_id=current_user.id,
+                user_message=user_message,
+            ),
+            timeout=settings.GEMINI_TIMEOUT,
+        )
+        logger.info("Briefing agent completed for user=%s tokens=%d", current_user.id, result.usage.total_tokens)
+
+        await _persist_agent_usage(
+            db,
+            user_id=current_user.id,
+            agent_name="daily_briefing_agent",
+            endpoint="/agent/briefing",
+            usage=result.usage,
+            request_id=request_id,
+        )
+
+        briefing_text = result.text
         if len(_briefing_cache) > 1000:
-            _briefing_cache.clear() # Prune if too large
-        _briefing_cache[prompt] = briefing_text
-        
+            _briefing_cache.clear()
+        _briefing_cache[user_message] = briefing_text
+
         return {"briefing": briefing_text}
+    except asyncio.TimeoutError:
+        logger.error("Briefing agent timed out after %d seconds", settings.GEMINI_TIMEOUT)
+        return {"briefing": fallback}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Gemini briefing error for user=%s: %s", current_user.id, str(e))
-        return {
-            "briefing": f"Good morning, {username}! You have {today_count} tasks scheduled for today and {overdue_count} overdue. Let's make today count!"
-        }
+        logger.error("Briefing agent error for user=%s: %s", current_user.id, str(e))
+        return {"briefing": fallback}
 
 
 @router.post("/suggest-subtasks")
 async def suggest_subtasks(
     request_data: SuggestSubtasksRequest,
+    db: DatabaseSession,
     current_user: CurrentUser,
 ):
     """
-    Queries Gemini for 3 to 5 subtask checklist items.
-    The Gemini call is offloaded to a thread pool to avoid blocking the event loop.
+    Queries Gemini for 3 to 5 subtask checklist items via ADK.
     """
     logger.info("POST /suggest-subtasks - user=%s title=%r", current_user.id, request_data.title[:60])
 
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "gemini-api-key-placeholder":
+    if not _is_gemini_configured():
         return ["Analyze requirements", "Execute draft", "Review and refine"]
 
-    prompt = (
-        f"For the task titled: '{request_data.title}'\n"
-        f"Description: '{request_data.description or ''}'\n\n"
-        "Suggest 3 to 5 actionable subtasks to complete this task. "
-        "Format the output strictly as a JSON list of strings, e.g. [\"Subtask 1\", \"Subtask 2\"]."
-    )
+    await enforce_llm_quota(db, current_user.id)
+    request_id = uuid.uuid4()
 
     try:
-        # ✅ Run sync Gemini SDK in thread pool
-        logger.info("Calling Gemini for subtasks (in thread) for user=%s", current_user.id)
-        raw = await run_gemini_in_thread(prompt, response_mime_type="application/json")
-        logger.info("Gemini subtasks received for user=%s", current_user.id)
-        return json.loads(raw)
+        logger.info("Running subtasks agent for user=%s", current_user.id)
+        result = await asyncio.wait_for(
+            run_subtasks_agent(
+                user_id=current_user.id,
+                title=request_data.title,
+                description=request_data.description,
+            ),
+            timeout=settings.GEMINI_TIMEOUT,
+        )
+        await _persist_agent_usage(
+            db,
+            user_id=current_user.id,
+            agent_name="subtasks_suggester_agent",
+            endpoint="/agent/suggest-subtasks",
+            usage=result.usage,
+            request_id=request_id,
+        )
+        logger.info("Subtasks agent completed for user=%s tokens=%d", current_user.id, result.usage.total_tokens)
+        return json.loads(result.text)
+    except asyncio.TimeoutError:
+        logger.error("Subtasks agent timed out after %d seconds", settings.GEMINI_TIMEOUT)
+        return ["Analyze requirements", "Execute draft", "Review and refine"]
+    except HTTPException:
+        raise
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.error("Subtasks agent parse error for user=%s: %s", current_user.id, str(e))
+        return ["Analyze requirements", "Execute draft", "Review and refine"]
     except Exception as e:
-        logger.error("Gemini subtasks error for user=%s: %s", current_user.id, str(e))
+        logger.error("Subtasks agent error for user=%s: %s", current_user.id, str(e))
         return ["Analyze requirements", "Execute draft", "Review and refine"]

@@ -1,1 +1,14 @@
-Generic single-database configuration with an async dbapi.
+# Database migrations
+
+Run Alembic from **either** location:
+
+```bash
+# From project root
+alembic upgrade head
+
+# From backend/
+cd backend
+alembic upgrade head
+```
+
+Ensure `DATABASE_URL` is set in `backend/.env` (or the default in `app/core/config.py` matches your Postgres instance).

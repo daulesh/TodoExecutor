@@ -1,8 +1,8 @@
 import uuid
 from datetime import date, datetime, timezone
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, and_, or_
+from fastapi import APIRouter, HTTPException, Query, status
+from sqlalchemy import select, and_
 from sqlalchemy.orm import joinedload, selectinload
 from app.api.deps import DatabaseSession, CurrentUser
 from app.models.models import Task, Category, TaskChangeLog
@@ -59,11 +59,6 @@ async def read_tasks(
     stmt = stmt.order_by(Task.target_date.asc(), Task.start_time.asc())
 
     tasks = (await db.scalars(stmt)).all()
-    
-    # Map target_time to start_time on schemas dynamically
-    for t in tasks:
-        t.target_time = t.start_time
-        
     return list(tasks)
 
 @router.get("/{task_id}", response_model=TaskDetailResponse)
@@ -86,7 +81,6 @@ async def read_task_by_id(
             detail="Task not found.",
         )
     
-    task.target_time = task.start_time
     return task
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
@@ -123,7 +117,6 @@ async def create_task(
     # Eagerly load relationship
     stmt = select(Task).where(Task.id == db_task.id).options(joinedload(Task.category))
     loaded_task = (await db.execute(stmt)).scalar_one()
-    loaded_task.target_time = loaded_task.start_time
     
     await db.commit()
     return loaded_task
@@ -191,7 +184,6 @@ async def update_task(
     # Preload the category to return it
     stmt_reload = select(Task).where(Task.id == task.id).options(joinedload(Task.category))
     reloaded = (await db.execute(stmt_reload)).scalar_one()
-    reloaded.target_time = reloaded.start_time
     
     return reloaded
 
@@ -231,7 +223,6 @@ async def complete_task(
     await db.commit()
     await db.refresh(task)
     
-    task.target_time = task.start_time
     return task
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
