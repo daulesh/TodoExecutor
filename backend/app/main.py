@@ -10,23 +10,27 @@ from app.models.models import User, Category, Task, TaskChangeLog, LlmUsageLog
 
 import os
 
-# Create local logs folder inside the workspace root
-# Located outside backend/ directory to prevent Uvicorn reload loops when writing logs
-backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-workspace_root = os.path.dirname(backend_dir)
-log_dir = os.path.join(workspace_root, "logs")
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, "app.log")
+if settings.ENABLE_LOGGING:
+    # Create local logs folder inside the workspace root
+    # Located outside backend/ directory to prevent Uvicorn reload loops when writing logs
+    backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    workspace_root = os.path.dirname(backend_dir)
+    log_dir = os.path.join(workspace_root, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "app.log")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    datefmt="%H:%M:%S",
-    handlers=[
-        logging.FileHandler(log_file, encoding="utf-8"),
-        logging.StreamHandler(),
-    ],
-)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
+        handlers=[
+            logging.FileHandler(log_file, encoding="utf-8"),
+            logging.StreamHandler(),
+        ],
+    )
+else:
+    logging.basicConfig(level=logging.CRITICAL)
+
 logger = logging.getLogger(__name__)
 
 app = FastAPI(

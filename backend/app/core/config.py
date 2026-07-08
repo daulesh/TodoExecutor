@@ -38,6 +38,9 @@ class Settings:
 
     # Per-user monthly LLM token quota (0 = unlimited)
     LLM_MONTHLY_TOKEN_QUOTA: int = int(os.getenv("LLM_MONTHLY_TOKEN_QUOTA", "100000"))
+
+    # App file + console logging (false = no FileHandler / StreamHandler from basicConfig)
+    ENABLE_LOGGING: bool = os.getenv("ENABLE_LOGGING", "true").lower() in ("1", "true", "yes")
     
     # CORS Configuration
     BACKEND_CORS_ORIGINS: List[str] = [
