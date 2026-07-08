@@ -59,7 +59,10 @@ docs/private/
 
 #agent related files
 .agents/
+.cursor/
 
 # project planning / tracking files
 progress.md
 implementation.md
+
+logs/
